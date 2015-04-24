@@ -1,0 +1,35 @@
+heat_template_version: 2013-05-23
+parameters:
+  image:
+    type: string
+    default: cirros-0.3.2-x86_64-uec
+  flavor:
+    type: string
+    default: m1.nano
+  network:
+    type: string
+    default: private
+resources:
+  server:
+    type: OS::Nova::Server
+    properties:
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      user_data:
+       #!/bin/bash
+       echo 'hello world' > /root/test.txt
+      networks:
+      - network: {get_param: network}
+  cinder_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: 1
+  cinder_volume_att:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: {get_resource: cinder_volume}
+      instance_uuid: {get_resource: server}
+      mountpoint: /dev/vdc
+outputs:
+  serverip:
+    value: {get_attr: [server, networks, {get_param: network}, 0]}
